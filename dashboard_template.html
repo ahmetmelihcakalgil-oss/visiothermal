@@ -1,0 +1,371 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VisioThermal AI - Prototip</title>
+<style>
+:root{
+  --bg:#f4f7f6; --card:#ffffff; --ink:#10211e; --muted:#5b6b67; --line:#dbe5e2;
+  --teal:#0f766e; --teal2:#14b8a6; --mint:#d9f3ee; --warn:#c2410c; --red:#b91c1c;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{background:linear-gradient(120deg,#0b4f49,#0f766e 60%,#14b8a6);color:#fff;padding:22px 20px 26px}
+.wrap{max-width:1180px;margin:0 auto;padding:0 16px}
+header .wrap{padding:0}
+.eyebrow{letter-spacing:.18em;font-size:11px;opacity:.8;text-transform:uppercase}
+h1{margin:4px 0 2px;font-size:28px}
+header p{margin:0;opacity:.92}
+.badge{display:inline-block;margin-top:10px;padding:3px 10px;border:1px solid rgba(255,255,255,.55);border-radius:999px;font-size:12px}
+main{padding:18px 0 40px}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.kpi .l{font-size:12px;color:var(--muted)}
+.kpi .v{font-size:28px;font-weight:700;color:var(--teal);line-height:1.2;margin:2px 0}
+.kpi .s{font-size:12px;color:var(--muted)}
+.grid{display:grid;grid-template-columns:minmax(300px,5fr) 7fr;gap:14px;margin-bottom:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.card h2{margin:0 0 10px;font-size:15px}
+#room{width:100%;display:block;border-radius:8px;border:1px solid var(--line)}
+.ctrl{display:flex;gap:10px;align-items:center;margin:10px 0}
+.ctrl button{background:var(--teal);color:#fff;border:0;border-radius:8px;padding:6px 14px;font-weight:600;cursor:pointer}
+.ctrl input[type=range]{flex:1}
+.clock{font-variant-numeric:tabular-nums;font-weight:700;min-width:48px}
+.info{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.info div{background:var(--mint);border-radius:8px;padding:6px 10px}
+.info b{display:block;font-size:17px;font-variant-numeric:tabular-nums}
+.info span{font-size:11px;color:var(--muted)}
+.info .alert{background:#fee2e2}
+.info .alert b{color:var(--red)}
+#chart{width:100%;height:360px;display:block;cursor:crosshair;touch-action:none}
+.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:12px;color:var(--muted);margin-top:6px}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:4px;vertical-align:-2px}
+.snaps{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.snaps figure{margin:0}
+.snaps img{width:100%;border-radius:8px;border:1px solid var(--line);display:block}
+.snaps figcaption{font-size:12px;color:var(--muted);margin-top:3px}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th,td{text-align:left;padding:5px 8px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums;white-space:nowrap}
+th{position:sticky;top:0;background:#fff;color:var(--muted);font-weight:600}
+.scroll{max-height:260px;overflow:auto;border:1px solid var(--line);border-radius:8px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+ul.assume{margin:0;padding-left:18px}
+ul.assume li{margin:3px 0}
+.fb{color:var(--red);font-weight:600}
+@media(max-width:900px){
+  .kpis{grid-template-columns:repeat(2,1fr)}
+  .grid,.two{grid-template-columns:1fr}
+  .snaps{grid-template-columns:repeat(2,1fr)}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="eyebrow">Project Design Review · Climathon · Task 3 · Prototip</div>
+    <h1>VisioThermal AI</h1>
+    <p>Görüntü tabanlı anlık doluluk analizi ile dinamik HVAC ve aydınlatma optimizasyonu</p>
+    <span class="badge">SİMÜLASYON · sentetik amfi, 1 tam gün (08:00-20:00)</span>
+    <span class="badge" style="margin-left:6px">GERÇEK KARE DOĞRULAMASI · datasetv1 (3 fotoğraf)</span>
+  </div>
+</header>
+<main class="wrap">
+  <section class="kpis" id="kpis"></section>
+
+  <section class="grid">
+    <div class="card">
+      <h2>Amfi görünümü (algılanan kişiler ve kontrol çıktıları)</h2>
+      <canvas id="room" width="960" height="640"></canvas>
+      <div class="ctrl">
+        <button id="play">Oynat</button>
+        <span class="clock" id="clock">08:00</span>
+        <input type="range" id="slider" min="0" value="0">
+      </div>
+      <div class="info" id="info"></div>
+    </div>
+    <div class="card">
+      <h2>Gün boyunca doluluk, HVAC gücü ve kontrol seviyesi</h2>
+      <canvas id="chart"></canvas>
+      <div class="legend">
+        <span><i style="background:#9aa8a4"></i>Gerçek kişi sayısı</span>
+        <span><i style="background:#0f766e"></i>Sayılan (dedektör)</span>
+        <span><i style="background:#c2410c"></i>Baz durum (sabit program)</span>
+        <span><i style="background:#14b8a6;opacity:.6"></i>VisioThermal gücü</span>
+        <span><i style="background:#86efac"></i>Tasarruf</span>
+        <span><i style="background:#fca5a5"></i>Kamera kesintisi (güvenli mod)</span>
+      </div>
+      <div class="legend" style="margin-top:2px">
+        <span><i style="background:#94a3b8"></i>Seviye %0</span>
+        <span><i style="background:#6ee7b7"></i>%25</span>
+        <span><i style="background:#14b8a6"></i>%50</span>
+        <span><i style="background:#0f766e"></i>%100</span>
+        <span>Grafiğe tıklayın veya sürükleyin: zamanı seçer.</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="card" style="margin-bottom:14px">
+    <h2>Görü katmanından örnek kareler (yoğunluk haritası + kutular)</h2>
+    <div class="snaps" id="snaps"></div>
+  </section>
+
+  <section class="card" style="margin-bottom:14px">
+    <h2>Gerçek görüntüler üzerinde doğrulama (datasetv1)</h2>
+    <p id="realnote" style="margin:0 0 10px;font-size:12.5px;color:var(--muted)"></p>
+    <div class="snaps" id="real"></div>
+    <div class="scroll" style="margin-top:10px"><table id="realtbl"></table></div>
+  </section>
+
+  <section class="card" style="margin-bottom:14px" id="setvidsec" hidden>
+    <h2>Set videosu — dedektör test kaydı (datasetv1/1020(1).mp4)</h2>
+    <p id="setvidnote" style="margin:0 0 10px;font-size:12.5px;color:var(--muted)"></p>
+    <video id="setvid" controls playsinline preload="metadata"
+           style="width:100%;max-height:460px;background:#000;border-radius:8px;display:block"></video>
+  </section>
+
+  <section class="card" style="margin-bottom:14px" id="vidsec" hidden>
+    <h2>Demo kaydı (python run_demo.py çalışırken)</h2>
+    <p id="vidnote" style="margin:0 0 10px;font-size:12.5px;color:var(--muted)"></p>
+    <video id="vid" controls playsinline preload="metadata"
+           style="width:100%;max-height:460px;background:#000;border-radius:8px;display:block"></video>
+  </section>
+
+  <section class="two">
+    <div class="card">
+      <h2>BMS komut günlüğü (değişim bazlı yazımlar)</h2>
+      <div class="scroll"><table id="bms"></table></div>
+    </div>
+    <div class="card">
+      <h2>Varsayımlar ve sınırlar</h2>
+      <ul class="assume" id="assume"></ul>
+    </div>
+  </section>
+</main>
+
+<script>
+const D = __DATA__;
+const R = D.rec, M = D.meta, S = D.summary, A = D.accuracy, P = D.plant;
+const N = R.t.length, MAXCFM = 4000;
+const LV = {0:'#94a3b8',25:'#6ee7b7',50:'#14b8a6',100:'#0f766e'};
+const nf = (x,d=1)=>Number(x).toLocaleString('tr-TR',{minimumFractionDigits:d,maximumFractionDigits:d});
+const hhmm = m => String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0');
+let cur = 0, timer = null;
+
+/* ---------- KPIs ---------- */
+document.getElementById('kpis').innerHTML = [
+  ['HVAC enerji tasarrufu', nf(S.hvac_saving_pct)+'%', nf(S.hvac_base_kwh_day)+' → '+nf(S.hvac_opt_kwh_day)+' kWh / gün / amfi'],
+  ['Toplam tasarruf (HVAC + aydınlatma)', nf(S.total_saving_pct)+'%', 'Aydınlatma tek başına: '+nf(S.light_saving_pct)+'%'],
+  ['Yıllık projeksiyon, '+S.campus_halls+' amfi', nf(S.saved_kwh_year_campus,0)+' kWh', 'Amfi başına '+nf(S.saved_kwh_year_per_hall,0)+' kWh / yıl ('+S.academic_days+' gün)'],
+  ['Sayım hatası (kare başına)', nf(A.mae_people,2)+' kişi', 'En fazla '+A.max_err_people+' kişi · atıl süre '+nf(A.idle_hours)+' saat']
+].map(k=>'<div class="kpi"><div class="l">'+k[0]+'</div><div class="v">'+k[1]+'</div><div class="s">'+k[2]+'</div></div>').join('');
+
+/* ---------- room view ---------- */
+const room = document.getElementById('room'), rg = room.getContext('2d');
+function drawRoom(i){
+  const s = room.width / M.width;
+  rg.setTransform(s,0,0,s,0,0);
+  rg.fillStyle = '#bcb6b0'; rg.fillRect(0,0,M.width,M.height);
+  rg.fillStyle = '#646e78'; rg.fillRect(60,6,M.width-120,28);
+  rg.fillStyle = '#fff'; rg.font = '11px system-ui'; rg.textAlign = 'center';
+  rg.fillText('kürsü / tahta', M.width/2, 24);
+  for (const [x,y] of M.seats){
+    rg.fillStyle = '#54585c'; rg.fillRect(x-12,y-4,24,14);
+    rg.fillStyle = '#a0968c'; rg.fillRect(x-14,y-12,28,4);
+  }
+  const pts = R.pts[i];
+  for (let k=0;k<pts.length;k+=2){
+    const x=pts[k], y=pts[k+1];
+    const gr = rg.createRadialGradient(x,y,0,x,y,30);
+    gr.addColorStop(0,'rgba(245,158,11,.28)'); gr.addColorStop(1,'rgba(245,158,11,0)');
+    rg.fillStyle = gr; rg.beginPath(); rg.arc(x,y,30,0,6.2832); rg.fill();
+  }
+  for (let k=0;k<pts.length;k+=2){
+    const x=pts[k], y=pts[k+1];
+    rg.fillStyle='rgba(20,184,166,.55)'; rg.strokeStyle='#0b5d56'; rg.lineWidth=1;
+    rg.beginPath(); rg.arc(x,y,9,0,6.2832); rg.fill(); rg.stroke();
+  }
+  const y0 = 40, y1 = M.height-20, bh = (y1-y0)/3, names=['ön','orta','arka'];
+  for (let b=0;b<3;b++){
+    const lp = R.light[i][b];
+    rg.fillStyle = 'rgba(8,16,30,'+((100-lp)/100*0.55)+')';
+    rg.fillRect(0,y0+b*bh,M.width,bh);
+    rg.fillStyle = '#fff'; rg.textAlign='right'; rg.font='bold 11px system-ui';
+    rg.fillText('ışık '+names[b]+' %'+lp, M.width-8, y0+b*bh+14);
+  }
+  if (R.fallback[i]){
+    rg.fillStyle='rgba(185,28,28,.55)'; rg.fillRect(0,0,M.width,M.height);
+    rg.fillStyle='#fff'; rg.textAlign='center'; rg.font='bold 18px system-ui';
+    rg.fillText('KAMERA YOK', M.width/2, M.height/2-6);
+    rg.font='13px system-ui';
+    rg.fillText('güvenli mod: eski program (%100)', M.width/2, M.height/2+16);
+  }
+}
+function drawInfo(i){
+  const det = R.det[i], fb = R.fallback[i];
+  const pctOcc = det==null ? '-' : nf(100*det/M.capacity,0)+'%';
+  const cells = [
+    ['Saat', hhmm(R.t[i]), ''],
+    ['Sayılan / gerçek', (det==null?'-':det)+' / '+R.true[i], ''],
+    ['Doluluk', pctOcc, ''],
+    ['HVAC seviyesi', '%'+R.level[i], fb?'alert':''],
+    ['Set / fan', nf(R.setpoint[i])+' °C · '+nf(R.fan[i]*MAXCFM/100,0)+' CFM', ''],
+    ['HVAC gücü', nf(R.hvac_opt[i])+' kW (baz '+nf(R.hvac_base[i],0)+')', '']
+  ];
+  document.getElementById('info').innerHTML = cells.map(c=>'<div class="'+c[2]+'"><span>'+c[0]+'</span><b>'+c[1]+'</b></div>').join('');
+  document.getElementById('clock').textContent = hhmm(R.t[i]);
+}
+
+/* ---------- timeline chart ---------- */
+const ch = document.getElementById('chart'), cg = ch.getContext('2d');
+function drawChart(){
+  const dpr = window.devicePixelRatio || 1;
+  const w = ch.clientWidth, h = ch.clientHeight;
+  ch.width = w*dpr; ch.height = h*dpr; cg.setTransform(dpr,0,0,dpr,0,0);
+  cg.clearRect(0,0,w,h);
+  const L=46, Rr=10, X = i => L + (w-L-Rr)*i/(N-1);
+  const pA=[10,128], pB=[150,268], pC=[282,304];
+  cg.font='11px system-ui'; cg.textBaseline='middle';
+
+  // outage band
+  const fi = R.fallback.map((v,i)=>v?i:-1).filter(i=>i>=0);
+  if (fi.length){
+    cg.fillStyle='rgba(252,165,165,.5)';
+    cg.fillRect(X(fi[0]),pA[0],X(fi[fi.length-1]+1)-X(fi[0]),pC[1]-pA[0]);
+  }
+  // panel A: occupancy
+  const yA = v => pA[1]-(pA[1]-pA[0])*v/M.capacity;
+  cg.strokeStyle='#e5ecea'; cg.fillStyle='#5b6b67'; cg.textAlign='right';
+  for (const v of [0,48,96]){ cg.beginPath(); cg.moveTo(L,yA(v)); cg.lineTo(w-Rr,yA(v)); cg.stroke(); cg.fillText(v,L-6,yA(v)); }
+  cg.save(); cg.translate(10,(pA[0]+pA[1])/2); cg.rotate(-Math.PI/2); cg.textAlign='center'; cg.fillText('kişi',0,0); cg.restore();
+  cg.strokeStyle='#9aa8a4'; cg.lineWidth=1.2; cg.beginPath();
+  R.true.forEach((v,i)=>{ i?cg.lineTo(X(i),yA(v)):cg.moveTo(X(i),yA(v)); }); cg.stroke();
+  cg.strokeStyle='#0f766e'; cg.lineWidth=1.6; cg.beginPath(); let pen=false;
+  R.det.forEach((v,i)=>{ if(v==null){pen=false;return;} pen?cg.lineTo(X(i),yA(v)):cg.moveTo(X(i),yA(v)); pen=true; });
+  cg.stroke();
+  // panel B: power
+  const yB = v => pB[1]-(pB[1]-pB[0])*v/16;
+  cg.strokeStyle='#e5ecea'; cg.fillStyle='#5b6b67'; cg.lineWidth=1; cg.textAlign='right';
+  for (const v of [0,5,10,15]){ cg.beginPath(); cg.moveTo(L,yB(v)); cg.lineTo(w-Rr,yB(v)); cg.stroke(); cg.fillText(v,L-6,yB(v)); }
+  cg.save(); cg.translate(10,(pB[0]+pB[1])/2); cg.rotate(-Math.PI/2); cg.textAlign='center'; cg.fillText('HVAC kW',0,0); cg.restore();
+  cg.fillStyle='rgba(134,239,172,.55)'; cg.beginPath(); cg.moveTo(X(0),yB(R.hvac_base[0]));
+  for(let i=0;i<N;i++) cg.lineTo(X(i),yB(R.hvac_base[i]));
+  for(let i=N-1;i>=0;i--) cg.lineTo(X(i),yB(R.hvac_opt[i]));
+  cg.closePath(); cg.fill();
+  cg.fillStyle='rgba(20,184,166,.45)'; cg.beginPath(); cg.moveTo(X(0),yB(0));
+  for(let i=0;i<N;i++) cg.lineTo(X(i),yB(R.hvac_opt[i]));
+  cg.lineTo(X(N-1),yB(0)); cg.closePath(); cg.fill();
+  cg.strokeStyle='#0f766e'; cg.lineWidth=1.4; cg.beginPath();
+  R.hvac_opt.forEach((v,i)=>{ i?cg.lineTo(X(i),yB(v)):cg.moveTo(X(i),yB(v)); }); cg.stroke();
+  cg.strokeStyle='#c2410c'; cg.setLineDash([5,4]); cg.lineWidth=1.4; cg.beginPath();
+  cg.moveTo(X(0),yB(R.hvac_base[0])); cg.lineTo(X(N-1),yB(R.hvac_base[N-1])); cg.stroke(); cg.setLineDash([]);
+  // panel C: level strip
+  const cw = (w-L-Rr)/N + 0.6;
+  for(let i=0;i<N;i++){ cg.fillStyle = R.fallback[i] ? '#ef4444' : LV[R.level[i]]; cg.fillRect(X(i),pC[0],cw,pC[1]-pC[0]); }
+  cg.fillStyle='#5b6b67'; cg.textAlign='right'; cg.fillText('seviye',L-6,(pC[0]+pC[1])/2);
+  // x axis
+  cg.textAlign='center'; cg.fillStyle='#5b6b67';
+  for (let m=R.t[0]; m<=R.t[N-1]+1; m+=120){
+    const i=m-R.t[0], last = i>=N-1;
+    cg.textAlign = last ? 'right' : 'center';
+    cg.fillText(hhmm(m), X(Math.min(i,N-1)) + (last?4:0), 322);
+  }
+  // cursor
+  cg.strokeStyle='#10211e'; cg.lineWidth=1.2; cg.beginPath(); cg.moveTo(X(cur),pA[0]-4); cg.lineTo(X(cur),pC[1]+4); cg.stroke();
+  ch._X = {L:L, Rr:Rr, w:w};
+}
+function idxFromEvent(e){
+  const r = ch.getBoundingClientRect(), x = e.clientX - r.left, g = ch._X;
+  return Math.max(0, Math.min(N-1, Math.round((x-g.L)/(g.w-g.L-g.Rr)*(N-1))));
+}
+let drag=false;
+ch.addEventListener('pointerdown', e=>{ drag=true; ch.setPointerCapture(e.pointerId); setCur(idxFromEvent(e)); });
+ch.addEventListener('pointermove', e=>{ if(drag) setCur(idxFromEvent(e)); });
+ch.addEventListener('pointerup', ()=>{ drag=false; });
+
+/* ---------- controls ---------- */
+const slider = document.getElementById('slider'); slider.max = N-1;
+function setCur(i){ cur=i; slider.value=i; drawRoom(i); drawInfo(i); drawChart(); }
+slider.addEventListener('input', ()=>setCur(+slider.value));
+document.getElementById('play').addEventListener('click', e=>{
+  if (timer){ clearInterval(timer); timer=null; e.target.textContent='Oynat'; return; }
+  e.target.textContent='Durdur';
+  timer = setInterval(()=>setCur((cur+2)%N), 70);
+});
+window.addEventListener('resize', drawChart);
+
+/* ---------- snapshots, BMS table, assumptions ---------- */
+document.getElementById('snaps').innerHTML = D.snaps.map(s =>
+  '<figure><img alt="" src="data:image/jpeg;base64,'+s.jpg+'"><figcaption>'+hhmm(s.t)+' · gerçek '+s.true+' · sayılan '+s.count+' · seviye %'+s.level+'</figcaption></figure>').join('');
+
+/* ---------- real stills (datasetv1) ---------- */
+const RE = (D.real && D.real.items) || [];
+const RCAP = (D.real && D.real.capacity) || 40;
+document.getElementById('realnote').innerHTML = RE.length
+  ? 'Bu 3 fotoğraf gerçek bir derslik kamerasından alınmış karelerdir (datasetv1/). Simülasyona dahil değildirler; '
+    + 'yalnızca görü katmanının gerçek görüntülere nasıl tepki verdiğini gösterirler. Dedektör: <b>'
+    + (D.real.detector==='yolo' ? 'YOLO' : 'klasik arka plan çıkarımı (blob) — bu karelerde boş referans karesi olmadığı için güvenilir değildir') + '</b>. '
+    + 'Kapasite <b>' + RCAP + ' koltuk</b>. 11:24 karesi elle doğrulanmış <b>26</b> kişiye göre düzeltilmiştir; '
+    + 'bu karedeki turuncu kutular ikinci modelin düşük güvenli tespitleridir. '
+    + 'Işıklar oturma alanının ön/orta/arka bölgelerine göre verilir; boş bölgenin ışığı kapatılır (11:10 arka sıralar). '
+    + 'Tek kare üzerinde anlık karar verilir; 5 dakikalık aşağı gecikme ve histerezis yalnızca sürekli akışta uygulanır. '
+    + 'Isı haritası ve kutular bu fotoğrafların üzerine işlenmiştir; kaynak dosyalar değiştirilmemiştir.'
+  : 'datasetv1/ klasöründe görüntü bulunamadı; gerçek kare doğrulaması atlandı.';
+
+document.getElementById('real').innerHTML = RE.map(r =>
+  '<figure><img alt="" src="data:image/jpeg;base64,'+r.jpg+'">'
+  + '<figcaption><b>'+r.label+'</b> · '+r.file
+  + '<br>Sayılan <b>'+r.count+'</b> kişi · doluluk %'+nf(100*r.ratio,0)+' · HVAC seviyesi <b>%'+r.level+'</b>'
+  + '<br>'+nf(r.setpoint)+' °C · fan %'+r.fan+' · ışık ön/orta/arka %'+r.lights.join(' / %')
+  + (r.corrected ? ' · <b>elle doğrulanmış</b>' : '')+'</figcaption></figure>').join('');
+
+document.getElementById('realtbl').innerHTML = RE.length ?
+  '<tr><th>Kare</th><th>Kişi</th><th>Doluluk</th><th>Seviye</th><th>Set</th><th>Fan</th><th>Işık (ön/orta/arka)</th><th>Ön/Orta/Arka sayısı</th></tr>'
+  + RE.map(r=>'<tr><td>'+r.label+' · '+r.file+(r.corrected?' (elle doğrulandı)':'')+'</td>'
+      + '<td>'+r.count+'</td><td>%'+nf(100*r.ratio,0)+'</td><td>%'+r.level+'</td>'
+      + '<td>'+nf(r.setpoint)+' °C</td><td>%'+r.fan+'</td><td>%'+r.lights.join(' / %')+'</td>'
+      + '<td>'+r.bands.join(' / ')+'</td></tr>').join('') : '';
+
+/* ---------- real set clip: detector test over datasetv1 video ---------- */
+if (D.setvideo) {
+  document.getElementById('setvid').src = 'data:' + D.setvideo.mime + ';base64,' + D.setvideo.data;
+  document.getElementById('setvidsec').hidden = false;
+  document.getElementById('setvidnote').textContent =
+    D.setvideo.file + ' · ' + nf(D.setvideo.size_mb) + ' MB · kaynak: datasetv1/1020(1).mp4 '
+    + '(15 sn, 450 kare, 3 sahne). Dedektör kare kare canlı çalışır: 10:18, 11:24 ve 11:10 '
+    + 'sahnelerinde sayımlar ve karar çıktıları (seviye, setpoint, fan, ışık bantları) '
+    + 'ekrana yazılır. 11:24 sahnesinde elle doğrulanan 26 kişiye ulaşmak için ikinci model '
+    + '(yolov8s) birleştirilir. Yeşil kutular güvenli, turuncu kutular düşük güvenli '
+    + 'tespitlerdir. Kareler bellekte işlenir, diske yazılmaz.';
+}
+
+/* ---------- demo run recording ---------- */
+if (D.video) {
+  document.getElementById('vid').src = 'data:' + D.video.mime + ';base64,' + D.video.data;
+  document.getElementById('vidsec').hidden = false;
+  document.getElementById('vidnote').textContent =
+    D.video.file + ' · ' + nf(D.video.size_mb) + ' MB · ekran görüntüsü değil: demo, '
+    + 'bir günlük simülasyonu kare kare (dedektör → medyan filtre → kontrol → BMS → enerji) '
+    + 'işleyerek make_demo_video.py ile üretildi; her karedeki sayımlar, seviye, setpoint ve '
+    + 'güçler çalıştırılan kodun gerçek çıktılarıdır. Simülasyon verisine ek bir veri girmez.';
+}
+document.getElementById('bms').innerHTML =
+  '<tr><th>Saat</th><th>Nesne</th><th>Nokta</th><th>Değer</th><th>Neden</th></tr>' +
+  D.bms.map(e=>'<tr><td>'+hhmm(e.minute)+'</td><td>'+e.object+'</td><td>'+e.point+'</td><td>'+e.value+' '+e.unit+'</td><td>'+
+    (e.reason.fallback?'<span class="fb">kamera yok: güvenli mod</span>':'seviye %'+e.reason.level+' · doluluk %'+nf(100*e.reason.ratio,0))+'</td></tr>').join('');
+const fbMin = A.fallback_minutes;
+document.getElementById('assume').innerHTML = [
+  'Simülasyon verisi (günlük zaman serisi, enerji hesabı ve 6 örnek kare) tamamen sentetiktir. datasetv1/ klasöründeki 3 gerçek derslik fotoğrafı yalnızca dedektör doğrulaması için panoya gömüldü ve simülasyona/enerji hesaplarına dahil değildir. "Set videosu" datasetv1/1020(1).mp4 üzerinden make_set_video.py ile canlı dedektör testini, "Demo kaydı" videosu make_demo_video.py ile kodun kendisini gösterir (ikisi de kare kare üretilir, ekran kaydı değildir); bu klipler simülasyon verisine ek veri girmez. Çalışma zamanında kareler bellekte işlenir, diske yazılmaz.',
+  'HVAC güç oranları (%20 / 45 / 70 / 100) PDR\'deki "%60-80 kısma" hedefinden türetilmiş varsayımdır; gerçek amfilerde ölçülerek kalibre edilmelidir.',
+  'Aydınlatma gücü ('+P.lighting_kw+' kW/amfi) PDR\'de yoktur, varsayımdır. HVAC gücü ('+P.hvac_kw+' kW), '+P.hours+' saat/gün, '+P.days+' gün ve '+P.halls+' amfi PDR\'den alındı.',
+  'Yıllık projeksiyon tüm amfilerin bu günlük profili izlediğini varsayar. PDR\'deki "%25-30" hedefi bina düzeyindedir; bu prototip yalnızca amfi HVAC + aydınlatmayı ölçer.',
+  'Dedektör: sentetik günde klasik arka plan çıkarımı + alan bazlı sayım ('+M.detector+'); gerçek fotoğraflarda YOLOv8n. 11:24 karesi, kısmen masa arkasında kalan kişileri kaçırdığı için ikinci model (YOLOv8s) ile birleştirilip elle doğrulanan 26 sayısına sabitlendi; turuncu kutular düşük güvenli tespitlerdir. Tavan/köşe kamerası verisiyle ince ayar gerekir.',
+  'Kare başına hata '+nf(A.mae_people,2)+' kişi (maks. '+A.max_err_people+', %'+nf(A.within_2_pct,0)+' kare ±2 kişi içinde). 3 karelik medyan filtresi hızlı giriş/çıkışta gecikme yaratır (maks. '+A.smoothed_max_err_people+' kişi).',
+  'Kamera kesintisi senaryosu: '+hhmm(M.fail[0])+'-'+hhmm(M.fail[1])+' arası ('+fbMin+' dk) sistem eski %100 programa döner.',
+  'BACnet/Modbus adaptörleri taslaktır; çıktılar MockBMS günlüğüne yazılır, gerçek cihazla denenmedi.'
+].map(t=>'<li>'+t+'</li>').join('');
+
+setCur(0); drawChart();
+</script>
+</body>
+</html>
