@@ -1,8 +1,10 @@
 # VisioThermal AI - Prototip
 
+EKTEKİ DASHBOARD DOSYASINA ÇİFT TIKLAYIN SAĞ ÜSTTEN DOWNLOAD RAW FİLE SEÇENEĞİNE BASIN KISA ÖZET İÇEREN BİR SAYFA SİZİ KARŞILAYACAK 
+
 Mevcut guvenlik kameralarindan amfi dolulugunu sayip HVAC ve aydinlatmayi
 doluluga gore olcekleyen sistemin calisan prototipi (PDR Task 3).
-VisioThermal AI — mevcut güvenlik kamerasından amfi doluluğunu sayıp HVAC/aydınlatmayı ölçekleyen çalışan prototip. Ekteki dashboard.html dosyasına çift tıklayın (kurulum/internet gerekmiyor): günlük simülasyon, gerçek fotoğraflar üzerinde dedektör doğrulaması ve demo videoları tek dosyada. Kod ve README: github.com/ahmetmelihcakalgil-oss/visiothermal. Sonuç: HVAC'ta %35.9, aydınlatmada %23.5 tasarruf.
+VisioThermal AI — mevcut güvenlik kamerasından amfi doluluğunu sayıp HVAC/aydınlatmayı ölçekleyen çalışan prototip. (kurulum/internet gerekmiyor): günlük simülasyon, gerçek fotoğraflar üzerinde dedektör doğrulaması ve demo videoları tek dosyada. Kod ve README: github.com/ahmetmelihcakalgil-oss/visiothermal. Sonuç: HVAC'ta %35.9, aydınlatmada %23.5 tasarruf.
 
 ## Calistirma
 
