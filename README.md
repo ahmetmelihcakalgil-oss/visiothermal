@@ -1,5 +1,5 @@
 # VisioThermal AI - Prototip
-
+https://visiothermal-ai-prototip.vercel.app/
 EKTEKİ DASHBOARD DOSYASINA ÇİFT TIKLAYIN SAĞ ÜSTTEN DOWNLOAD RAW FİLE SEÇENEĞİNE BASIN KISA ÖZET İÇEREN BİR SAYFA SİZİ KARŞILAYACAK 
 
 Mevcut guvenlik kameralarindan amfi dolulugunu sayip HVAC ve aydinlatmayi
